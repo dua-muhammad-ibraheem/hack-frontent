@@ -1,16 +1,22 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+
 function App() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-900 text-white">
-      <div className="rounded-xl bg-slate-800 p-8 shadow-2xl border border-slate-700 text-center">
-        <h1 className="text-3xl font-bold text-emerald-400 mb-2">
-          Tailwind Working! 🚀
-        </h1>
-        <p className="text-slate-400">
-          Agar ye box dark theme aur colored text ke sath dikh raha hai toh Tailwind setup ho chuka hai.
-        </p>
-      </div>
-    </div>
-  )
+    <BrowserRouter>
+      <Navbar />
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
