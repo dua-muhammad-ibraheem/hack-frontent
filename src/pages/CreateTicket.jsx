@@ -3,48 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "../api/axios";
 
 const CATEGORY_KEYWORDS = {
-  Billing: [
-    "payment",
-    "invoice",
-    "charge",
-    "refund",
-    "bill",
-    "subscription",
-    "price",
-    "paid",
-  ],
-  Account: [
-    "login",
-    "password",
-    "account",
-    "signup",
-    "sign up",
-    "profile",
-    "email",
-    "verify",
-    "otp",
-  ],
-  Technical: [
-    "bug",
-    "error",
-    "crash",
-    "not working",
-    "issue",
-    "broken",
-    "slow",
-    "loading",
-    "app",
-    "website",
-  ],
-  Orders: [
-    "order",
-    "delivery",
-    "shipment",
-    "tracking",
-    "package",
-    "return",
-    "courier",
-  ],
+  Billing: ["payment", "invoice", "charge", "refund", "bill", "subscription", "price", "paid"],
+  Account: ["login", "password", "account", "signup", "sign up", "profile", "email", "verify", "otp"],
+  Technical: ["bug", "error", "crash", "not working", "issue", "broken", "slow", "loading", "app", "website"],
+  Orders: ["order", "delivery", "shipment", "tracking", "package", "return", "courier"],
   General: [],
 };
 
@@ -56,7 +18,6 @@ const suggestCategories = (text) => {
   const scored = ALL_CATEGORIES.map((cat) => {
     const words = CATEGORY_KEYWORDS[cat];
     const score = words.filter((w) => lower.includes(w)).length;
-
     return { cat, score };
   });
 
@@ -84,56 +45,33 @@ const CreateTicket = () => {
 
   const [workers, setWorkers] = useState([]);
   const [selectedWorker, setSelectedWorker] = useState("");
-
   const [loadingWorkers, setLoadingWorkers] = useState(false);
+
   const [loading, setLoading] = useState(false);
 
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
-  // Suggest categories
+  // Fetch matching workers whenever the selected category changes
   useEffect(() => {
-    const combinedText =
-      `${formData.subject} ${formData.description}`.trim();
-
-    if (combinedText.length < 8) {
-      setSuggestions([]);
+    if (!formData.category) {
+      setWorkers([]);
+      setSelectedWorker("");
       return;
     }
 
-    const timer = setTimeout(() => {
-      setSuggestions(suggestCategories(combinedText));
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [formData.subject, formData.description]);
-
-  // Fetch workers according to selected category
-  useEffect(() => {
     const fetchWorkers = async () => {
-      if (!formData.category) {
-        setWorkers([]);
-        setSelectedWorker("");
-        setLoadingWorkers(false);
-        return;
-      }
-
       try {
         setLoadingWorkers(true);
-        setError("");
+        setSelectedWorker("");
 
         const response = await api.get(
-          `/tickets/workers?category=${encodeURIComponent(
-            formData.category
-          )}`
+          `/tickets/workers?category=${formData.category}`
         );
 
         setWorkers(response.data.workers || []);
-        setSelectedWorker("");
       } catch (error) {
         console.error("Fetch workers error:", error);
-
-        setWorkers([]);
 
         setError(
           error.response?.data?.message ||
@@ -146,6 +84,22 @@ const CreateTicket = () => {
 
     fetchWorkers();
   }, [formData.category]);
+
+  // Suggest categories as the user describes their issue (debounced)
+  useEffect(() => {
+    const combinedText = `${formData.subject} ${formData.description}`.trim();
+
+    if (combinedText.length < 8) {
+      setSuggestions([]);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setSuggestions(suggestCategories(combinedText));
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [formData.subject, formData.description]);
 
   const handleChange = (e) => {
     setFormData({
@@ -200,7 +154,7 @@ const CreateTicket = () => {
         subject: formData.subject.trim(),
         description: formData.description.trim(),
         category: formData.category,
-        assignedWorker: selectedWorker,
+        assignedAgent: selectedWorker,
       });
 
       setSuccess(true);
@@ -212,7 +166,6 @@ const CreateTicket = () => {
       });
 
       setSuggestions([]);
-      setWorkers([]);
       setSelectedWorker("");
 
       setTimeout(() => {
@@ -304,7 +257,7 @@ const CreateTicket = () => {
               </p>
             </div>
 
-            {/* Category */}
+            {/* Category — suggested */}
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-900">
                 Category
@@ -342,9 +295,7 @@ const CreateTicket = () => {
 
               <button
                 type="button"
-                onClick={() =>
-                  setShowManualPicker((prev) => !prev)
-                }
+                onClick={() => setShowManualPicker((prev) => !prev)}
                 className="mt-3 text-xs font-semibold text-blue-600 hover:text-blue-700"
               >
                 {showManualPicker
@@ -362,7 +313,6 @@ const CreateTicket = () => {
                   className="mt-3 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 >
                   <option value="">Select a category</option>
-
                   {ALL_CATEGORIES.map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
@@ -372,48 +322,48 @@ const CreateTicket = () => {
               )}
             </div>
 
-            {/* Worker */}
-            <div>
-              <label
-                htmlFor="worker"
-                className="mb-2 block text-sm font-semibold text-gray-900"
-              >
-                Select Worker
-              </label>
+            {/* Worker — suggested based on category */}
+            {formData.category && (
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-900">
+                  Select Worker
+                </label>
 
-              <select
-                id="worker"
-                value={selectedWorker}
-                onChange={(e) => {
-                  setSelectedWorker(e.target.value);
-                  setError("");
-                  setSuccess(false);
-                }}
-                disabled={!formData.category || loadingWorkers}
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-                required
-              >
-                <option value="">
-                  {!formData.category
-                    ? "Select a category first"
-                    : loadingWorkers
-                    ? "Loading workers..."
-                    : workers.length === 0
-                    ? "No workers available"
-                    : "Select a worker"}
-                </option>
+                {loadingWorkers && (
+                  <p className="text-sm text-gray-500">Finding matching workers...</p>
+                )}
 
-                {workers.map((worker) => (
-                  <option key={worker._id} value={worker._id}>
-                    {worker.name}
-                  </option>
-                ))}
-              </select>
+                {!loadingWorkers && workers.length === 0 && (
+                  <p className="text-sm text-gray-500">
+                    No workers available for {formData.category} right now.
+                  </p>
+                )}
 
-              <p className="mt-2 text-xs text-gray-500">
-                Workers are shown according to the selected category.
-              </p>
-            </div>
+                {!loadingWorkers && workers.length > 0 && (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {workers.map((worker) => (
+                      <button
+                        key={worker._id}
+                        type="button"
+                        onClick={() => setSelectedWorker(worker._id)}
+                        className={`rounded-xl border px-4 py-3 text-left transition ${
+                          selectedWorker === worker._id
+                            ? "border-blue-600 bg-blue-50"
+                            : "border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        <p className="text-sm font-semibold text-gray-900">
+                          {worker.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {worker.specialization} specialist
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Error */}
             {error && (
@@ -446,7 +396,6 @@ const CreateTicket = () => {
                 {loading ? "Creating..." : "Submit Request"}
               </button>
             </div>
-
           </form>
         </div>
       </section>
