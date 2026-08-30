@@ -11,7 +11,7 @@ import CustomerDashboard from "./pages/CustomerDashboard";
 import WorkerDashboard from "./pages/WorkerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import CreateTicket from "./pages/CreateTicket";
-
+import TicketDetail from "./pages/TicketDetail";
 const App = () => {
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -33,6 +33,14 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+  path="/tickets/:id"
+  element={
+    <ProtectedRoute allowedRoles={["customer", "worker", "admin"]}>
+      <TicketDetail />
+    </ProtectedRoute>
+  }
+/>
           <Route
             path="/create-ticket"
             element={
