@@ -10,7 +10,6 @@ const Signup = () => {
     email: "",
     password: "",
     role: "customer",
-    specialization: "",
   });
 
   const [message, setMessage] = useState("");
@@ -27,12 +26,6 @@ const Signup = () => {
     e.preventDefault();
 
     setMessage("");
-
-    if (formData.role === "worker" && !formData.specialization) {
-      setMessage("Please select a specialization for the worker account.");
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -54,8 +47,6 @@ const Signup = () => {
     { value: "worker", label: "Worker" },
     { value: "admin", label: "Admin" },
   ];
-
-  const specializations = ["Billing", "Account", "Technical", "Orders", "General"];
 
   return (
     <main className="min-h-[calc(100vh-64px)] bg-gray-50 px-6 py-12">
@@ -157,34 +148,6 @@ const Signup = () => {
                 ))}
               </div>
             </div>
-
-            {/* Specialization — only for Worker */}
-            {formData.role === "worker" && (
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Specialization
-                </label>
-
-                <select
-                  name="specialization"
-                  value={formData.specialization}
-                  onChange={handleChange}
-                  required
-                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
-                >
-                  <option value="">Select a specialization</option>
-                  {specializations.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-
-                <p className="mt-2 text-xs text-gray-500">
-                  Customers with this issue type will be matched to you.
-                </p>
-              </div>
-            )}
 
             {/* Error */}
             {message && (
