@@ -2,13 +2,49 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/axios";
 
-// Temporary rule-based category suggestion — will be replaced by a real
-// backend AI call (/api/ai/suggest-category) once the backend AI phase is built.
 const CATEGORY_KEYWORDS = {
-  Billing: ["payment", "invoice", "charge", "refund", "bill", "subscription", "price", "paid"],
-  Account: ["login", "password", "account", "signup", "sign up", "profile", "email", "verify", "otp"],
-  Technical: ["bug", "error", "crash", "not working", "issue", "broken", "slow", "loading", "app", "website"],
-  Orders: ["order", "delivery", "shipment", "tracking", "package", "return", "courier"],
+  Billing: [
+    "payment",
+    "invoice",
+    "charge",
+    "refund",
+    "bill",
+    "subscription",
+    "price",
+    "paid",
+  ],
+  Account: [
+    "login",
+    "password",
+    "account",
+    "signup",
+    "sign up",
+    "profile",
+    "email",
+    "verify",
+    "otp",
+  ],
+  Technical: [
+    "bug",
+    "error",
+    "crash",
+    "not working",
+    "issue",
+    "broken",
+    "slow",
+    "loading",
+    "app",
+    "website",
+  ],
+  Orders: [
+    "order",
+    "delivery",
+    "shipment",
+    "tracking",
+    "package",
+    "return",
+    "courier",
+  ],
   General: [],
 };
 
@@ -20,6 +56,7 @@ const suggestCategories = (text) => {
   const scored = ALL_CATEGORIES.map((cat) => {
     const words = CATEGORY_KEYWORDS[cat];
     const score = words.filter((w) => lower.includes(w)).length;
+
     return { cat, score };
   });
 
@@ -48,37 +85,16 @@ const CreateTicket = () => {
   const [workers, setWorkers] = useState([]);
   const [selectedWorker, setSelectedWorker] = useState("");
 
-  const [loadingWorkers, setLoadingWorkers] = useState(true);
+  const [loadingWorkers, setLoadingWorkers] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
-  // Fetch workers from MongoDB
+  // Suggest categories
   useEffect(() => {
-    const fetchWorkers = async () => {
-      try {
-        const response = await api.get("/tickets/workers");
-
-        setWorkers(response.data.workers || []);
-      } catch (error) {
-        console.error("Fetch workers error:", error);
-
-        setError(
-          error.response?.data?.message ||
-            "Failed to load available workers"
-        );
-      } finally {
-        setLoadingWorkers(false);
-      }
-    };
-
-    fetchWorkers();
-  }, []);
-
-  // Suggest categories as the user describes their issue (debounced)
-  useEffect(() => {
-    const combinedText = `${formData.subject} ${formData.description}`.trim();
+    const combinedText =
+      `${formData.subject} ${formData.description}`.trim();
 
     if (combinedText.length < 8) {
       setSuggestions([]);
@@ -91,6 +107,45 @@ const CreateTicket = () => {
 
     return () => clearTimeout(timer);
   }, [formData.subject, formData.description]);
+
+  // Fetch workers according to selected category
+  useEffect(() => {
+    const fetchWorkers = async () => {
+      if (!formData.category) {
+        setWorkers([]);
+        setSelectedWorker("");
+        setLoadingWorkers(false);
+        return;
+      }
+
+      try {
+        setLoadingWorkers(true);
+        setError("");
+
+        const response = await api.get(
+          `/tickets/workers?category=${encodeURIComponent(
+            formData.category
+          )}`
+        );
+
+        setWorkers(response.data.workers || []);
+        setSelectedWorker("");
+      } catch (error) {
+        console.error("Fetch workers error:", error);
+
+        setWorkers([]);
+
+        setError(
+          error.response?.data?.message ||
+            "Failed to load available workers"
+        );
+      } finally {
+        setLoadingWorkers(false);
+      }
+    };
+
+    fetchWorkers();
+  }, [formData.category]);
 
   const handleChange = (e) => {
     setFormData({
@@ -145,7 +200,7 @@ const CreateTicket = () => {
         subject: formData.subject.trim(),
         description: formData.description.trim(),
         category: formData.category,
-        assignedAgent: selectedWorker,
+        assignedWorker: selectedWorker,
       });
 
       setSuccess(true);
@@ -157,6 +212,7 @@ const CreateTicket = () => {
       });
 
       setSuggestions([]);
+      setWorkers([]);
       setSelectedWorker("");
 
       setTimeout(() => {
@@ -248,7 +304,7 @@ const CreateTicket = () => {
               </p>
             </div>
 
-            {/* Category — suggested */}
+            {/* Category */}
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-900">
                 Category
@@ -286,7 +342,9 @@ const CreateTicket = () => {
 
               <button
                 type="button"
-                onClick={() => setShowManualPicker((prev) => !prev)}
+                onClick={() =>
+                  setShowManualPicker((prev) => !prev)
+                }
                 className="mt-3 text-xs font-semibold text-blue-600 hover:text-blue-700"
               >
                 {showManualPicker
@@ -304,6 +362,7 @@ const CreateTicket = () => {
                   className="mt-3 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 >
                   <option value="">Select a category</option>
+
                   {ALL_CATEGORIES.map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
@@ -330,13 +389,17 @@ const CreateTicket = () => {
                   setError("");
                   setSuccess(false);
                 }}
-                disabled={loadingWorkers}
+                disabled={!formData.category || loadingWorkers}
                 className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
                 required
               >
                 <option value="">
-                  {loadingWorkers
+                  {!formData.category
+                    ? "Select a category first"
+                    : loadingWorkers
                     ? "Loading workers..."
+                    : workers.length === 0
+                    ? "No workers available"
                     : "Select a worker"}
                 </option>
 
@@ -348,7 +411,7 @@ const CreateTicket = () => {
               </select>
 
               <p className="mt-2 text-xs text-gray-500">
-                Workers are loaded from the system.
+                Workers are shown according to the selected category.
               </p>
             </div>
 
@@ -383,6 +446,7 @@ const CreateTicket = () => {
                 {loading ? "Creating..." : "Submit Request"}
               </button>
             </div>
+
           </form>
         </div>
       </section>
