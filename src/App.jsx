@@ -1,14 +1,17 @@
-
 import { Routes, Route } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import CustomerDashboard from "./pages/CustomerDashboard";
+import WorkerDashboard from "./pages/WorkerDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import CreateTicket from "./pages/CreateTicket";
+
 const App = () => {
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -16,14 +19,48 @@ const App = () => {
 
       <div className="flex-1">
         <Routes>
+          {/* Public */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+
+          {/* Customer only */}
           <Route
             path="/customer-dashboard"
-            element={<CustomerDashboard />}
+            element={
+              <ProtectedRoute allowedRoles={["customer"]}>
+                <CustomerDashboard />
+              </ProtectedRoute>
+            }
           />
-          <Route path="/create-ticket" element={<CreateTicket />} />
+          <Route
+            path="/create-ticket"
+            element={
+              <ProtectedRoute allowedRoles={["customer"]}>
+                <CreateTicket />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Worker only */}
+          <Route
+            path="/worker-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["worker"]}>
+                <WorkerDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Admin only */}
+          <Route
+            path="/admin-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </div>
 
@@ -33,4 +70,3 @@ const App = () => {
 };
 
 export default App;
-
