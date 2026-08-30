@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api/axios";
@@ -29,14 +30,33 @@ const Login = () => {
     try {
       const response = await api.post("/auth/login", formData);
 
+      // Save token
       localStorage.setItem("token", response.data.token);
+
+      // Save complete user including role
       localStorage.setItem(
         "user",
         JSON.stringify(response.data.user)
       );
 
-      // Directly go to Home
-      navigate("/", { replace: true });
+      // Get role from backend
+      const role = response.data.user.role;
+
+      // Redirect according to role
+      if (role === "worker") {
+        navigate("/worker-dashboard", {
+          replace: true,
+        });
+      } else if (role === "admin") {
+        navigate("/admin-dashboard", {
+          replace: true,
+        });
+      } else {
+        navigate("/customer-dashboard", {
+          replace: true,
+        });
+      }
+
     } catch (error) {
       setMessage(
         error.response?.data?.message ||
@@ -64,16 +84,24 @@ const Login = () => {
             </p>
           </div>
 
+
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-5"
+          >
 
             {/* Email */}
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="mb-2 block text-sm font-medium text-gray-700"
+              >
                 Email
               </label>
 
               <input
+                id="email"
                 type="email"
                 name="email"
                 placeholder="you@example.com"
@@ -84,13 +112,18 @@ const Login = () => {
               />
             </div>
 
+
             {/* Password */}
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="mb-2 block text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
 
               <input
+                id="password"
                 type="password"
                 name="password"
                 placeholder="Enter your password"
@@ -101,6 +134,7 @@ const Login = () => {
               />
             </div>
 
+
             {/* Error */}
             {message && (
               <div className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
@@ -108,19 +142,25 @@ const Login = () => {
               </div>
             )}
 
+
             {/* Button */}
             <button
               type="submit"
               disabled={loading}
               className="w-full rounded-xl bg-blue-600 py-3.5 font-semibold text-white transition hover:bg-blue-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? "Logging in..." : "Login"}
+              {loading
+                ? "Logging in..."
+                : "Login"}
             </button>
+
           </form>
+
 
           {/* Signup */}
           <p className="mt-7 text-center text-sm text-gray-500">
             Don't have an account?{" "}
+
             <Link
               to="/signup"
               className="font-semibold text-blue-600 transition hover:text-blue-700"
@@ -136,3 +176,4 @@ const Login = () => {
 };
 
 export default Login;
+

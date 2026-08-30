@@ -1,7 +1,37 @@
-
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/axios";
+
+// Temporary rule-based category suggestion — will be replaced by a real
+// backend AI call (/api/ai/suggest-category) once the backend AI phase is built.
+const CATEGORY_KEYWORDS = {
+  Billing: ["payment", "invoice", "charge", "refund", "bill", "subscription", "price", "paid"],
+  Account: ["login", "password", "account", "signup", "sign up", "profile", "email", "verify", "otp"],
+  Technical: ["bug", "error", "crash", "not working", "issue", "broken", "slow", "loading", "app", "website"],
+  Orders: ["order", "delivery", "shipment", "tracking", "package", "return", "courier"],
+  General: [],
+};
+
+const ALL_CATEGORIES = Object.keys(CATEGORY_KEYWORDS);
+
+const suggestCategories = (text) => {
+  const lower = text.toLowerCase();
+
+  const scored = ALL_CATEGORIES.map((cat) => {
+    const words = CATEGORY_KEYWORDS[cat];
+    const score = words.filter((w) => lower.includes(w)).length;
+    return { cat, score };
+  });
+
+  const matched = scored
+    .filter((s) => s.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map((s) => s.cat);
+
+  const rest = ALL_CATEGORIES.filter((c) => !matched.includes(c));
+
+  return [...matched, ...rest].slice(0, 3);
+};
 
 const CreateTicket = () => {
   const navigate = useNavigate();
@@ -11,6 +41,9 @@ const CreateTicket = () => {
     description: "",
     category: "",
   });
+
+  const [suggestions, setSuggestions] = useState([]);
+  const [showManualPicker, setShowManualPicker] = useState(false);
 
   const [workers, setWorkers] = useState([]);
   const [selectedWorker, setSelectedWorker] = useState("");
@@ -43,10 +76,36 @@ const CreateTicket = () => {
     fetchWorkers();
   }, []);
 
+  // Suggest categories as the user describes their issue (debounced)
+  useEffect(() => {
+    const combinedText = `${formData.subject} ${formData.description}`.trim();
+
+    if (combinedText.length < 8) {
+      setSuggestions([]);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setSuggestions(suggestCategories(combinedText));
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [formData.subject, formData.description]);
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
+    });
+
+    setError("");
+    setSuccess(false);
+  };
+
+  const handleSelectCategory = (cat) => {
+    setFormData({
+      ...formData,
+      category: cat,
     });
 
     setError("");
@@ -97,6 +156,7 @@ const CreateTicket = () => {
         category: "",
       });
 
+      setSuggestions([]);
       setSelectedWorker("");
 
       setTimeout(() => {
@@ -162,30 +222,95 @@ const CreateTicket = () => {
               />
             </div>
 
-            {/* Category */}
+            {/* Description */}
             <div>
               <label
-                htmlFor="category"
+                htmlFor="description"
                 className="mb-2 block text-sm font-semibold text-gray-900"
               >
+                Describe your issue
+              </label>
+
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="Explain what happened and how we can help..."
+                rows={7}
+                className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                required
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Please include enough details to help the worker understand
+                your problem.
+              </p>
+            </div>
+
+            {/* Category — suggested */}
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-gray-900">
                 Category
               </label>
 
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                required
+              {suggestions.length > 0 ? (
+                <>
+                  <p className="mb-3 text-xs text-gray-500">
+                    Based on your description, pick the closest match:
+                  </p>
+
+                  <div className="flex flex-wrap gap-2">
+                    {suggestions.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => handleSelectCategory(cat)}
+                        className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                          formData.category === cat
+                            ? "border-blue-600 bg-blue-600 text-white"
+                            : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs text-gray-500">
+                  Start typing your subject or description to see suggested
+                  categories.
+                </p>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowManualPicker((prev) => !prev)}
+                className="mt-3 text-xs font-semibold text-blue-600 hover:text-blue-700"
               >
-                <option value="">Select a category</option>
-                <option value="Billing">Billing</option>
-                <option value="Account">Account</option>
-                <option value="Technical">Technical</option>
-                <option value="Orders">Orders</option>
-                <option value="General">General</option>
-              </select>
+                {showManualPicker
+                  ? "Hide category list"
+                  : formData.category
+                  ? `Selected: ${formData.category} · choose a different one`
+                  : "Or choose manually"}
+              </button>
+
+              {showManualPicker && (
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="mt-3 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                >
+                  <option value="">Select a category</option>
+                  {ALL_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {/* Worker */}
@@ -224,32 +349,6 @@ const CreateTicket = () => {
 
               <p className="mt-2 text-xs text-gray-500">
                 Workers are loaded from the system.
-              </p>
-            </div>
-
-            {/* Description */}
-            <div>
-              <label
-                htmlFor="description"
-                className="mb-2 block text-sm font-semibold text-gray-900"
-              >
-                Describe your issue
-              </label>
-
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Explain what happened and how we can help..."
-                rows={7}
-                className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                required
-              />
-
-              <p className="mt-2 text-xs text-gray-500">
-                Please include enough details to help the worker understand
-                your problem.
               </p>
             </div>
 
@@ -292,4 +391,3 @@ const CreateTicket = () => {
 };
 
 export default CreateTicket;
-

@@ -9,6 +9,7 @@ const Signup = () => {
     name: "",
     email: "",
     password: "",
+    role: "customer",
   });
 
   const [message, setMessage] = useState("");
@@ -40,6 +41,12 @@ const Signup = () => {
       setLoading(false);
     }
   };
+
+  const roles = [
+    { value: "customer", label: "Customer" },
+    { value: "worker", label: "Worker" },
+    { value: "admin", label: "Admin" },
+  ];
 
   return (
     <main className="min-h-[calc(100vh-64px)] bg-gray-50 px-6 py-12">
@@ -110,6 +117,36 @@ const Signup = () => {
                 required
                 className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
               />
+            </div>
+
+            {/* Role */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                I am a
+              </label>
+
+              <div className="grid grid-cols-3 gap-3">
+                {roles.map((r) => (
+                  <label
+                    key={r.value}
+                    className={`cursor-pointer rounded-xl border px-3 py-3 text-center text-sm font-semibold transition ${
+                      formData.role === r.value
+                        ? "border-blue-600 bg-blue-50 text-blue-600"
+                        : "border-gray-300 text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="role"
+                      value={r.value}
+                      checked={formData.role === r.value}
+                      onChange={handleChange}
+                      className="sr-only"
+                    />
+                    {r.label}
+                  </label>
+                ))}
+              </div>
             </div>
 
             {/* Error */}
