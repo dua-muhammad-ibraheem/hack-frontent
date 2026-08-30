@@ -41,7 +41,6 @@ const CreateTicket = () => {
   });
 
   const [suggestions, setSuggestions] = useState([]);
-  const [showManualPicker, setShowManualPicker] = useState(false);
 
   const [workers, setWorkers] = useState([]);
   const [selectedWorker, setSelectedWorker] = useState("");
@@ -257,7 +256,7 @@ const CreateTicket = () => {
               </p>
             </div>
 
-            {/* Category — suggested */}
+            {/* Category — suggested only, no manual full list */}
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-900">
                 Category
@@ -291,34 +290,6 @@ const CreateTicket = () => {
                   Start typing your subject or description to see suggested
                   categories.
                 </p>
-              )}
-
-              <button
-                type="button"
-                onClick={() => setShowManualPicker((prev) => !prev)}
-                className="mt-3 text-xs font-semibold text-blue-600 hover:text-blue-700"
-              >
-                {showManualPicker
-                  ? "Hide category list"
-                  : formData.category
-                  ? `Selected: ${formData.category} · choose a different one`
-                  : "Or choose manually"}
-              </button>
-
-              {showManualPicker && (
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="mt-3 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                >
-                  <option value="">Select a category</option>
-                  {ALL_CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
               )}
             </div>
 
@@ -356,7 +327,7 @@ const CreateTicket = () => {
                           {worker.name}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {worker.specialization} specialist
+                          {worker.email}
                         </p>
                       </button>
                     ))}
