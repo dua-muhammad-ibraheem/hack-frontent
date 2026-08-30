@@ -1,17 +1,47 @@
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import api from "../api/axios";
 
 const CreateTicket = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     subject: "",
     description: "",
     category: "",
   });
 
+  const [workers, setWorkers] = useState([]);
+  const [selectedWorker, setSelectedWorker] = useState("");
+
+  const [loadingWorkers, setLoadingWorkers] = useState(true);
   const [loading, setLoading] = useState(false);
+
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+
+  // Fetch workers from MongoDB
+  useEffect(() => {
+    const fetchWorkers = async () => {
+      try {
+        const response = await api.get("/tickets/workers");
+
+        setWorkers(response.data.workers || []);
+      } catch (error) {
+        console.error("Fetch workers error:", error);
+
+        setError(
+          error.response?.data?.message ||
+            "Failed to load available workers"
+        );
+      } finally {
+        setLoadingWorkers(false);
+      }
+    };
+
+    fetchWorkers();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -23,7 +53,7 @@ const CreateTicket = () => {
     setSuccess(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     setError("");
@@ -39,12 +69,26 @@ const CreateTicket = () => {
       return;
     }
 
+    if (!formData.category) {
+      setError("Please select a category.");
+      return;
+    }
+
+    if (!selectedWorker) {
+      setError("Please select a worker.");
+      return;
+    }
+
     setLoading(true);
 
-    // Temporary frontend behavior.
-    // This will be replaced with the real backend API.
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await api.post("/tickets", {
+        subject: formData.subject.trim(),
+        description: formData.description.trim(),
+        category: formData.category,
+        assignedAgent: selectedWorker,
+      });
+
       setSuccess(true);
 
       setFormData({
@@ -52,7 +96,22 @@ const CreateTicket = () => {
         description: "",
         category: "",
       });
-    }, 800);
+
+      setSelectedWorker("");
+
+      setTimeout(() => {
+        navigate("/customer-dashboard");
+      }, 1000);
+    } catch (error) {
+      console.error("Create ticket error:", error);
+
+      setError(
+        error.response?.data?.message ||
+          "Failed to create ticket"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -68,11 +127,11 @@ const CreateTicket = () => {
           </Link>
 
           <h1 className="mt-5 text-3xl font-bold tracking-tight text-gray-900">
-            Create a Support Ticket
+            Create a Support Request
           </h1>
 
           <p className="mt-2 text-gray-600">
-            Tell us about your issue and our support team will help you.
+            Tell us about your issue and choose a worker to handle it.
           </p>
         </div>
       </section>
@@ -101,10 +160,6 @@ const CreateTicket = () => {
                 className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 required
               />
-
-              <p className="mt-2 text-xs text-gray-500">
-                Keep your subject short and clear.
-              </p>
             </div>
 
             {/* Category */}
@@ -114,9 +169,6 @@ const CreateTicket = () => {
                 className="mb-2 block text-sm font-semibold text-gray-900"
               >
                 Category
-                <span className="ml-1 font-normal text-gray-400">
-                  (Optional)
-                </span>
               </label>
 
               <select
@@ -125,17 +177,53 @@ const CreateTicket = () => {
                 value={formData.category}
                 onChange={handleChange}
                 className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                required
               >
-                <option value="">Let AI suggest a category</option>
+                <option value="">Select a category</option>
                 <option value="Billing">Billing</option>
                 <option value="Account">Account</option>
                 <option value="Technical">Technical</option>
                 <option value="Orders">Orders</option>
                 <option value="General">General</option>
               </select>
+            </div>
+
+            {/* Worker */}
+            <div>
+              <label
+                htmlFor="worker"
+                className="mb-2 block text-sm font-semibold text-gray-900"
+              >
+                Select Worker
+              </label>
+
+              <select
+                id="worker"
+                value={selectedWorker}
+                onChange={(e) => {
+                  setSelectedWorker(e.target.value);
+                  setError("");
+                  setSuccess(false);
+                }}
+                disabled={loadingWorkers}
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+                required
+              >
+                <option value="">
+                  {loadingWorkers
+                    ? "Loading workers..."
+                    : "Select a worker"}
+                </option>
+
+                {workers.map((worker) => (
+                  <option key={worker._id} value={worker._id}>
+                    {worker.name}
+                  </option>
+                ))}
+              </select>
 
               <p className="mt-2 text-xs text-gray-500">
-                You can leave this empty and let AI suggest the category.
+                Workers are loaded from the system.
               </p>
             </div>
 
@@ -160,30 +248,9 @@ const CreateTicket = () => {
               />
 
               <p className="mt-2 text-xs text-gray-500">
-                Please include any details that may help our support team.
+                Please include enough details to help the worker understand
+                your problem.
               </p>
-            </div>
-
-            {/* AI Info */}
-            <div className="rounded-xl border border-blue-100 bg-blue-50 p-5">
-              <div className="flex gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-sm font-bold text-white">
-                  AI
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-gray-900">
-                    AI-assisted triage
-                  </h3>
-
-                  <p className="mt-1 text-sm leading-6 text-gray-600">
-                    After you submit your ticket, AI will analyze your issue
-                    and suggest a category, priority, and short summary.
-                    A support agent will review the suggestions before they
-                    are finalized.
-                  </p>
-                </div>
-              </div>
             </div>
 
             {/* Error */}
@@ -196,7 +263,7 @@ const CreateTicket = () => {
             {/* Success */}
             {success && (
               <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-600">
-                Ticket created successfully!
+                Request created successfully!
               </div>
             )}
 
@@ -211,13 +278,12 @@ const CreateTicket = () => {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || loadingWorkers}
                 className="rounded-xl bg-blue-600 px-7 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "Creating Ticket..." : "Submit Ticket"}
+                {loading ? "Creating..." : "Submit Request"}
               </button>
             </div>
-
           </form>
         </div>
       </section>
