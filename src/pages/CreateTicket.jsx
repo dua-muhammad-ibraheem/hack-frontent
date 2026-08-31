@@ -26,15 +26,11 @@ const suggestCategories = (text) => {
     .sort((a, b) => b.score - a.score)
     .map((s) => s.cat);
 
-  // If nothing matched a specific category, always offer "General" first
   if (matched.length === 0) {
-    const rest = ALL_CATEGORIES.filter((c) => c !== "General");
-    return ["General", ...rest].slice(0, 3);
+    return ["General"];
   }
 
-  const rest = ALL_CATEGORIES.filter((c) => !matched.includes(c));
-
-  return [...matched, ...rest].slice(0, 3);
+  return matched;
 };
 
 const CreateTicket = () => {
@@ -46,7 +42,7 @@ const CreateTicket = () => {
     category: "",
   });
 
-  const [suggestions, setSuggestions] = useState([]);
+  const [categoryConfirmed, setCategoryConfirmed] = useState("");
 
   const [workers, setWorkers] = useState([]);
   const [selectedWorker, setSelectedWorker] = useState("");
@@ -58,7 +54,7 @@ const CreateTicket = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!formData.category) {
+    if (!categoryConfirmed) {
       setWorkers([]);
       setSelectedWorker("");
       return;
@@ -70,7 +66,7 @@ const CreateTicket = () => {
         setSelectedWorker("");
 
         const response = await api.get(
-          `/tickets/workers?category=${formData.category}`
+          `/tickets/workers?category=${categoryConfirmed}`
         );
 
         setWorkers(response.data.workers || []);
@@ -87,37 +83,30 @@ const CreateTicket = () => {
     };
 
     fetchWorkers();
-  }, [formData.category]);
+  }, [categoryConfirmed]);
 
   useEffect(() => {
     const combinedText = `${formData.subject} ${formData.description}`.trim();
 
-    if (combinedText.length < 8) {
-      setSuggestions([]);
+    if (combinedText.length < 3) {
+      setFormData((prev) => ({ ...prev, category: "" }));
+      setCategoryConfirmed("");
       return;
     }
 
     const timer = setTimeout(() => {
-      setSuggestions(suggestCategories(combinedText));
-    }, 400);
+      const topCategory = suggestCategories(combinedText)[0];
+      setFormData((prev) => ({ ...prev, category: topCategory }));
+    }, 300);
 
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.subject, formData.description]);
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
-    });
-
-    setError("");
-    setSuccess(false);
-  };
-
-  const handleSelectCategory = (cat) => {
-    setFormData({
-      ...formData,
-      category: cat,
     });
 
     setError("");
@@ -168,7 +157,7 @@ const CreateTicket = () => {
         category: "",
       });
 
-      setSuggestions([]);
+      setCategoryConfirmed("");
       setSelectedWorker("");
 
       setTimeout(() => {
@@ -261,38 +250,36 @@ const CreateTicket = () => {
                 Category
               </label>
 
-              {suggestions.length > 0 ? (
-                <>
-                  <p className="mb-3 text-xs text-gray-500">
-                    Based on your description, pick the closest match:
-                  </p>
+              {formData.category ? (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setCategoryConfirmed(formData.category)}
+                    className={`inline-block rounded-full px-4 py-2 text-sm font-semibold transition ${
+                      categoryConfirmed === formData.category
+                        ? "bg-blue-600 text-white"
+                        : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                    }`}
+                  >
+                    {formData.category}
+                    {categoryConfirmed === formData.category ? " ✓" : ""}
+                  </button>
 
-                  <div className="flex flex-wrap gap-2">
-                    {suggestions.map((cat) => (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => handleSelectCategory(cat)}
-                        className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                          formData.category === cat
-                            ? "border-blue-600 bg-blue-600 text-white"
-                            : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                </>
+                  <p className="mt-2 text-xs text-gray-500">
+                    {categoryConfirmed === formData.category
+                      ? "Category confirmed."
+                      : "Tap the category above to confirm it."}
+                  </p>
+                </div>
               ) : (
                 <p className="text-xs text-gray-500">
-                  Start typing your subject or description to see suggested
-                  categories.
+                  Start typing your subject — category will be detected
+                  automatically.
                 </p>
               )}
             </div>
 
-            {formData.category && (
+            {categoryConfirmed && (
               <div>
                 <label className="mb-2 block text-sm font-semibold text-gray-900">
                   Select Worker
@@ -304,7 +291,7 @@ const CreateTicket = () => {
 
                 {!loadingWorkers && workers.length === 0 && (
                   <p className="text-sm text-gray-500">
-                    No workers available for {formData.category} right now.
+                    No workers available for {categoryConfirmed} right now.
                   </p>
                 )}
 
