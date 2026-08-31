@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import api from "../api/axios";
 
@@ -7,6 +6,8 @@ const WorkerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState("");
   const [error, setError] = useState("");
+
+  const [rejectTarget, setRejectTarget] = useState(null);
 
   const fetchTickets = async () => {
     try {
@@ -34,11 +35,13 @@ const WorkerDashboard = () => {
   const handleAccept = async (id) => {
     try {
       setActionLoading(id);
+      setError("");
 
       await api.patch(`/tickets/${id}/accept`);
 
       await fetchTickets();
     } catch (error) {
+      console.error("Accept error:", error);
       setError(
         error.response?.data?.message ||
           "Failed to accept request"
@@ -48,18 +51,16 @@ const WorkerDashboard = () => {
     }
   };
 
-  const handleReject = async (id) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to reject this request? It will be permanently deleted."
-    );
-
-    if (!confirmed) return;
+  const confirmReject = async () => {
+    if (!rejectTarget) return;
 
     try {
-      setActionLoading(id);
+      setActionLoading(rejectTarget);
+      setError("");
 
-      await api.delete(`/tickets/${id}/reject`);
+      await api.delete(`/tickets/${rejectTarget}/reject`);
 
+      setRejectTarget(null);
       await fetchTickets();
     } catch (error) {
       setError(
@@ -74,6 +75,7 @@ const WorkerDashboard = () => {
   const handleComplete = async (id) => {
     try {
       setActionLoading(id);
+      setError("");
 
       await api.patch(`/tickets/${id}/complete`);
 
@@ -325,9 +327,7 @@ const WorkerDashboard = () => {
                       {ticket.status === "Assigned" && (
                         <>
                           <button
-                            onClick={() =>
-                              handleReject(ticket._id)
-                            }
+                            onClick={() => setRejectTarget(ticket._id)}
                             disabled={actionLoading === ticket._id}
                             className="rounded-xl border border-red-200 px-5 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                           >
@@ -387,9 +387,41 @@ const WorkerDashboard = () => {
         </div>
 
       </section>
+
+      {/* Reject confirmation modal */}
+      {rejectTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-bold text-gray-900">
+              Reject this request?
+            </h3>
+
+            <p className="mt-2 text-sm text-gray-600">
+              This will permanently delete the request. This action cannot
+              be undone.
+            </p>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => setRejectTarget(null)}
+                className="flex-1 rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={confirmReject}
+                disabled={actionLoading === rejectTarget}
+                className="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {actionLoading === rejectTarget ? "Rejecting..." : "Reject"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };
 
 export default WorkerDashboard;
-
