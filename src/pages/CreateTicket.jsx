@@ -26,6 +26,12 @@ const suggestCategories = (text) => {
     .sort((a, b) => b.score - a.score)
     .map((s) => s.cat);
 
+  // If nothing matched a specific category, always offer "General" first
+  if (matched.length === 0) {
+    const rest = ALL_CATEGORIES.filter((c) => c !== "General");
+    return ["General", ...rest].slice(0, 3);
+  }
+
   const rest = ALL_CATEGORIES.filter((c) => !matched.includes(c));
 
   return [...matched, ...rest].slice(0, 3);
@@ -51,7 +57,6 @@ const CreateTicket = () => {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
-  // Fetch matching workers whenever the selected category changes
   useEffect(() => {
     if (!formData.category) {
       setWorkers([]);
@@ -84,7 +89,6 @@ const CreateTicket = () => {
     fetchWorkers();
   }, [formData.category]);
 
-  // Suggest categories as the user describes their issue (debounced)
   useEffect(() => {
     const combinedText = `${formData.subject} ${formData.description}`.trim();
 
@@ -184,7 +188,6 @@ const CreateTicket = () => {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      {/* Header */}
       <section className="border-b border-gray-200 bg-white">
         <div className="mx-auto max-w-4xl px-6 py-8">
           <Link
@@ -204,12 +207,10 @@ const CreateTicket = () => {
         </div>
       </section>
 
-      {/* Form */}
       <section className="mx-auto max-w-4xl px-6 py-10">
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
 
-            {/* Subject */}
             <div>
               <label
                 htmlFor="subject"
@@ -230,7 +231,6 @@ const CreateTicket = () => {
               />
             </div>
 
-            {/* Description */}
             <div>
               <label
                 htmlFor="description"
@@ -256,7 +256,6 @@ const CreateTicket = () => {
               </p>
             </div>
 
-            {/* Category — suggested only, no manual full list */}
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-900">
                 Category
@@ -293,7 +292,6 @@ const CreateTicket = () => {
               )}
             </div>
 
-            {/* Worker — suggested based on category */}
             {formData.category && (
               <div>
                 <label className="mb-2 block text-sm font-semibold text-gray-900">
@@ -336,21 +334,18 @@ const CreateTicket = () => {
               </div>
             )}
 
-            {/* Error */}
             {error && (
               <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
                 {error}
               </div>
             )}
 
-            {/* Success */}
             {success && (
               <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-600">
                 Request created successfully!
               </div>
             )}
 
-            {/* Buttons */}
             <div className="flex flex-col-reverse gap-3 border-t border-gray-100 pt-6 sm:flex-row sm:justify-end">
               <Link
                 to="/customer-dashboard"
