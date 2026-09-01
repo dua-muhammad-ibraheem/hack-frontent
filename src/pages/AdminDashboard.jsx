@@ -16,7 +16,6 @@ const AdminDashboard = () => {
           api.get("/tickets/admin/all"),
           api.get("/users"),
         ]);
-
         setTickets(ticketsRes.data.tickets || []);
         setUsers(usersRes.data.users || []);
       } catch (err) {
@@ -26,7 +25,6 @@ const AdminDashboard = () => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
@@ -38,14 +36,24 @@ const AdminDashboard = () => {
   };
 
   const totalTickets = tickets.length;
-  const resolvedTickets = tickets.filter((t) => t.status === "Resolved").length;
-  const inProgressTickets = tickets.filter((t) => t.status === "In Progress").length;
-  const openTickets = tickets.filter(
-    (t) => t.status === "New" || t.status === "Assigned"
-  ).length;
+  const newCount = tickets.filter((t) => t.status === "New").length;
+  const assignedCount = tickets.filter((t) => t.status === "Assigned").length;
+  const inProgressCount = tickets.filter((t) => t.status === "In Progress").length;
+  const resolvedCount = tickets.filter((t) => t.status === "Resolved").length;
 
   const totalCustomers = users.filter((u) => u.role === "customer").length;
   const totalWorkers = users.filter((u) => u.role === "worker").length;
+
+  const statusBars = [
+    { label: "New", count: newCount, color: "bg-gray-400" },
+    { label: "Assigned", count: assignedCount, color: "bg-purple-500" },
+    { label: "In Progress", count: inProgressCount, color: "bg-blue-500" },
+    { label: "Resolved", count: resolvedCount, color: "bg-green-500" },
+  ];
+
+  const maxCount = Math.max(...statusBars.map((s) => s.count), 1);
+
+  const recentUsers = [...users].reverse().slice(0, 8);
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -80,16 +88,16 @@ const AdminDashboard = () => {
                 <p className="mt-2 text-3xl font-bold text-gray-900">{totalTickets}</p>
               </div>
               <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <p className="text-sm font-medium text-gray-500">Open</p>
-                <p className="mt-2 text-3xl font-bold text-gray-900">{openTickets}</p>
+                <p className="text-sm font-medium text-gray-500">New</p>
+                <p className="mt-2 text-3xl font-bold text-gray-900">{newCount}</p>
               </div>
               <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                 <p className="text-sm font-medium text-gray-500">In Progress</p>
-                <p className="mt-2 text-3xl font-bold text-gray-900">{inProgressTickets}</p>
+                <p className="mt-2 text-3xl font-bold text-gray-900">{inProgressCount}</p>
               </div>
               <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                 <p className="text-sm font-medium text-gray-500">Resolved</p>
-                <p className="mt-2 text-3xl font-bold text-gray-900">{resolvedTickets}</p>
+                <p className="mt-2 text-3xl font-bold text-gray-900">{resolvedCount}</p>
               </div>
               <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                 <p className="text-sm font-medium text-gray-500">Customers</p>
@@ -101,76 +109,132 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            <div className="mt-8 rounded-2xl border border-gray-200 bg-white shadow-sm">
-              <div className="border-b border-gray-100 p-6">
-                <h2 className="text-xl font-bold text-gray-900">All Tickets</h2>
+            <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-bold text-gray-900">Ticket Status Overview</h2>
+              <div className="mt-6 space-y-4">
+                {statusBars.map((bar) => (
+                  <div key={bar.label}>
+                    <div className="mb-1 flex items-center justify-between text-sm">
+                      <span className="font-medium text-gray-700">{bar.label}</span>
+                      <span className="text-gray-500">{bar.count}</span>
+                    </div>
+                    <div className="h-3 w-full overflow-hidden rounded-full bg-gray-100">
+                      <div
+                        className={`h-full rounded-full ${bar.color} transition-all duration-500`}
+                        style={{ width: `${(bar.count / maxCount) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-8 grid gap-6 lg:grid-cols-3">
+              <div className="rounded-2xl border border-gray-200 bg-white shadow-sm lg:col-span-2">
+                <div className="border-b border-gray-100 p-6">
+                  <h2 className="text-xl font-bold text-gray-900">All Tickets</h2>
+                </div>
+
+                {tickets.length === 0 ? (
+                  <div className="p-10 text-center text-sm text-gray-500">
+                    No tickets yet.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead className="border-b border-gray-100 bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500">
+                            Ticket
+                          </th>
+                          <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500">
+                            Customer
+                          </th>
+                          <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500">
+                            Worker
+                          </th>
+                          <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500">
+                            Status
+                          </th>
+                          <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500">
+                            Rating
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {tickets.map((t) => (
+                          <tr key={t._id}>
+                            <td className="px-6 py-4">
+                              <p className="text-sm font-semibold text-gray-900">
+                                {t.subject}
+                              </p>
+                              <p className="text-xs text-gray-500">{t.ticketNumber}</p>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600">
+                              {t.customer?.name || "—"}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600">
+                              {t.assignedWorker?.name || "Unassigned"}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span
+                                className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyle(
+                                  t.status
+                                )}`}
+                              >
+                                {t.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600">
+                              {t.rating ? `${t.rating} ★` : "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
 
-              {tickets.length === 0 ? (
-                <div className="p-10 text-center text-sm text-gray-500">
-                  No tickets yet.
+              <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                <div className="border-b border-gray-100 p-6">
+                  <h2 className="text-lg font-bold text-gray-900">Recent Signups</h2>
+                  <p className="mt-1 text-xs text-gray-500">Who joined the platform</p>
                 </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead className="border-b border-gray-100 bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500">
-                          Ticket
-                        </th>
-                        <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500">
-                          Customer
-                        </th>
-                        <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500">
-                          Worker
-                        </th>
-                        <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500">
-                          Category
-                        </th>
-                        <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500">
-                          Rating
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {tickets.map((t) => (
-                        <tr key={t._id}>
-                          <td className="px-6 py-4">
-                            <p className="text-sm font-semibold text-gray-900">
-                              {t.subject}
-                            </p>
-                            <p className="text-xs text-gray-500">{t.ticketNumber}</p>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">
-                            {t.customer?.name || "—"}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">
-                            {t.assignedWorker?.name || "Unassigned"}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">
-                            {t.category}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyle(
-                                t.status
-                              )}`}
-                            >
-                              {t.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">
-                            {t.rating ? `${t.rating} ★` : "—"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+
+                {recentUsers.length === 0 ? (
+                  <div className="p-6 text-center text-sm text-gray-500">
+                    No users yet.
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {recentUsers.map((u) => (
+                      <div
+                        key={u._id}
+                        className="flex items-center justify-between px-6 py-4"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-gray-900">
+                            {u.name}
+                          </p>
+                          <p className="truncate text-xs text-gray-500">{u.email}</p>
+                        </div>
+                        <span
+                          className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
+                            u.role === "worker"
+                              ? "bg-blue-50 text-blue-600"
+                              : u.role === "admin"
+                              ? "bg-purple-50 text-purple-600"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {u.role}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </>
         )}
