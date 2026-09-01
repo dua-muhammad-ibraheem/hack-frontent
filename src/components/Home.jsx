@@ -7,18 +7,18 @@ return ( <main>
 
       <div>
         <div className="mb-6 inline-flex rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-600">
-          Simple Customer Support System
+          Customer Support Management
         </div>
 
         <h1 className="max-w-2xl text-5xl font-bold leading-tight tracking-tight text-gray-900 md:text-6xl">
-          Get support
+          Support customers
           <span className="text-blue-600"> faster and easier.</span>
         </h1>
 
         <p className="mt-6 max-w-xl text-lg leading-8 text-gray-600">
-          Create support tickets, connect with the right support worker,
-          communicate about your issue, and track your request until it
-          is resolved.
+          Create support tickets, connect with support workers,
+          communicate about your issues, and track every resolution
+          from one simple dashboard.
         </p>
 
         <div className="mt-8 flex flex-wrap gap-4">
@@ -45,12 +45,12 @@ return ( <main>
 
           <div>
             <span className="font-bold text-gray-900">Direct</span>
-            <p>Communicate with workers</p>
+            <p>Worker communication</p>
           </div>
 
           <div>
-            <span className="font-bold text-gray-900">Track</span>
-            <p>Follow your ticket status</p>
+            <span className="font-bold text-gray-900">Secure</span>
+            <p>Protected support areas</p>
           </div>
         </div>
       </div>
@@ -59,7 +59,7 @@ return ( <main>
       <div className="relative">
         <div className="rounded-3xl border border-gray-200 bg-gray-50 p-4 shadow-2xl">
           <div className="rounded-2xl bg-white p-6">
-
+            
             <div className="flex items-center justify-between border-b border-gray-100 pb-5">
               <div>
                 <p className="text-sm text-gray-500">Support Dashboard</p>
@@ -146,7 +146,7 @@ return ( <main>
   {/* Features */}
   <section className="border-t border-gray-100 bg-gray-50 px-6 py-20">
     <div className="mx-auto max-w-7xl">
-
+      
       <div className="max-w-2xl">
         <p className="text-sm font-semibold text-blue-600">
           Everything in one place
@@ -157,25 +157,25 @@ return ( <main>
         </h2>
 
         <p className="mt-4 leading-7 text-gray-600">
-          From creating a support request to the final resolution,
-          SupportDesk keeps the entire support process organized.
+          From the first customer request to the final resolution,
+          SupportDesk keeps the entire support workflow organized.
         </p>
       </div>
 
       <div className="mt-12 grid gap-6 md:grid-cols-3">
-
+        
         <div className="rounded-2xl border border-gray-200 bg-white p-7">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 font-bold text-blue-600">
             ✓
           </div>
 
           <h3 className="mt-5 text-lg font-semibold text-gray-900">
-            Easy Ticket Creation
+            Smart Worker Assignment
           </h3>
 
           <p className="mt-2 leading-6 text-gray-600">
-            Customers can quickly create support requests and select the
-            appropriate category and support worker.
+            Customers can select a category and choose an available
+            support worker to handle their request.
           </p>
         </div>
 
@@ -189,8 +189,8 @@ return ( <main>
           </h3>
 
           <p className="mt-2 leading-6 text-gray-600">
-            Customers and support workers can communicate and discuss
-            issues directly through ticket replies.
+            Customers and workers can communicate through ticket replies
+            and keep all issue details in one place.
           </p>
         </div>
 
