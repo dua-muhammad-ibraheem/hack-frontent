@@ -2,6 +2,25 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import api from "../api/axios";
 
+const StarPicker = ({ value, onChange }) => {
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onChange(n)}
+          className={`text-3xl leading-none transition ${
+            n <= value ? "text-yellow-400" : "text-gray-300"
+          }`}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+};
+
 const TicketDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -14,33 +33,28 @@ const TicketDetail = () => {
 
   const [actionLoading, setActionLoading] = useState(false);
 
-  // AI suggestion review — worker edits these before accepting
   const [reviewCategory, setReviewCategory] = useState("");
   const [reviewPriority, setReviewPriority] = useState("");
   const [reviewSummary, setReviewSummary] = useState("");
 
-  // Reply thread
-  const [replyText, setReplyText] = useState("");
-  const [replySending, setReplySending] = useState(false);
-  const [replyError, setReplyError] = useState("");
+  const [ratingValue, setRatingValue] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewError, setReviewError] = useState("");
 
   const fetchTicket = async () => {
     try {
       setError("");
-
       const response = await api.get(`/tickets/${id}`);
       const data = response.data.ticket || response.data;
 
       setTicket(data);
-
       setReviewCategory(data.category || "");
       setReviewPriority(data.priority || "Medium");
       setReviewSummary(data.aiSummary || "");
     } catch (err) {
       console.error("Fetch ticket error:", err);
-      setError(
-        err.response?.data?.message || "Failed to load this ticket"
-      );
+      setError(err.response?.data?.message || "Failed to load this ticket");
     } finally {
       setLoading(false);
     }
@@ -52,15 +66,9 @@ const TicketDetail = () => {
   }, [id]);
 
   const getStatusStyle = (status) => {
-    if (status === "Resolved" || status === "Completed") {
-      return "bg-green-50 text-green-600";
-    }
-    if (status === "In Progress") {
-      return "bg-blue-50 text-blue-600";
-    }
-    if (status === "Assigned" || status === "Accepted") {
-      return "bg-purple-50 text-purple-600";
-    }
+    if (status === "Resolved") return "bg-green-50 text-green-600";
+    if (status === "In Progress") return "bg-blue-50 text-blue-600";
+    if (status === "Assigned") return "bg-purple-50 text-purple-600";
     return "bg-gray-100 text-gray-600";
   };
 
@@ -73,13 +81,11 @@ const TicketDetail = () => {
   const handleAccept = async () => {
     try {
       setActionLoading(true);
-
       await api.patch(`/tickets/${id}/accept`, {
         category: reviewCategory,
         priority: reviewPriority,
         summary: reviewSummary,
       });
-
       await fetchTicket();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to accept ticket");
@@ -96,9 +102,7 @@ const TicketDetail = () => {
 
     try {
       setActionLoading(true);
-
       await api.delete(`/tickets/${id}/reject`);
-
       navigate("/worker-dashboard", { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || "Failed to reject request");
@@ -109,9 +113,7 @@ const TicketDetail = () => {
   const handleComplete = async () => {
     try {
       setActionLoading(true);
-
       await api.patch(`/tickets/${id}/complete`);
-
       await fetchTicket();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to complete request");
@@ -120,27 +122,26 @@ const TicketDetail = () => {
     }
   };
 
-  const handleReply = async (e) => {
+  const handleSubmitReview = async (e) => {
     e.preventDefault();
+    setReviewError("");
 
-    if (!replyText.trim()) return;
+    if (ratingValue < 1) {
+      setReviewError("Please select a star rating.");
+      return;
+    }
 
     try {
-      setReplySending(true);
-      setReplyError("");
-
-      await api.post(`/tickets/${id}/replies`, {
-        message: replyText.trim(),
+      setSubmittingReview(true);
+      await api.post(`/tickets/${id}/review`, {
+        rating: ratingValue,
+        comment: reviewComment.trim(),
       });
-
-      setReplyText("");
       await fetchTicket();
     } catch (err) {
-      setReplyError(
-        err.response?.data?.message || "Failed to send reply"
-      );
+      setReviewError(err.response?.data?.message || "Failed to submit review");
     } finally {
-      setReplySending(false);
+      setSubmittingReview(false);
     }
   };
 
@@ -164,21 +165,16 @@ const TicketDetail = () => {
 
   if (!ticket) return null;
 
-  const backLink =
-    user.role === "worker" ? "/worker-dashboard" : "/customer-dashboard";
-
+  const backLink = user.role === "worker" ? "/worker-dashboard" : "/customer-dashboard";
   const isWorker = user.role === "worker";
-  const isResolved = ticket.status === "Resolved" || ticket.status === "Completed";
+  const isCustomer = user.role === "customer";
+  const isResolved = ticket.status === "Resolved";
 
   return (
     <main className="min-h-screen bg-gray-50">
-      {/* Header */}
       <section className="border-b border-gray-200 bg-white">
         <div className="mx-auto max-w-5xl px-6 py-8">
-          <Link
-            to={backLink}
-            className="text-sm font-medium text-blue-600 hover:text-blue-700"
-          >
+          <Link to={backLink} className="text-sm font-medium text-blue-600 hover:text-blue-700">
             ← Back to Dashboard
           </Link>
 
@@ -186,20 +182,10 @@ const TicketDetail = () => {
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">
               {ticket.subject}
             </h1>
-
-            <span
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyle(
-                ticket.status
-              )}`}
-            >
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyle(ticket.status)}`}>
               {ticket.status}
             </span>
-
-            <span
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${getPriorityStyle(
-                ticket.priority
-              )}`}
-            >
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getPriorityStyle(ticket.priority)}`}>
               {ticket.priority}
             </span>
           </div>
@@ -216,126 +202,92 @@ const TicketDetail = () => {
         )}
 
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Main column */}
           <div className="space-y-6 lg:col-span-2">
-            {/* Ticket details */}
             <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="text-sm font-semibold text-gray-900">
-                Description
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-gray-600">
-                {ticket.description}
-              </p>
+              <h2 className="text-sm font-semibold text-gray-900">Description</h2>
+              <p className="mt-2 text-sm leading-6 text-gray-600">{ticket.description}</p>
 
               <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-500">
                 <span>
-                  Category:{" "}
-                  <strong className="text-gray-700">{ticket.category}</strong>
+                  Category: <strong className="text-gray-700">{ticket.category}</strong>
                 </span>
-
                 {ticket.customer && (
                   <span>
-                    Customer:{" "}
-                    <strong className="text-gray-700">
-                      {ticket.customer.name}
-                    </strong>
+                    Customer: <strong className="text-gray-700">{ticket.customer.name}</strong>
                   </span>
                 )}
-
-                {ticket.assignedAgent && (
+                {ticket.assignedWorker && (
                   <span>
                     Worker:{" "}
                     <strong className="text-gray-700">
-                      {ticket.assignedAgent.name || "Assigned"}
+                      {ticket.assignedWorker.name || "Assigned"}
                     </strong>
                   </span>
                 )}
               </div>
-            </div>
 
-            {/* Conversation */}
-            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
-              <div className="border-b border-gray-100 p-6">
-                <h2 className="text-lg font-bold text-gray-900">
-                  Conversation
-                </h2>
-                <p className="mt-1 text-sm text-gray-500">
-                  Replies between you and{" "}
-                  {isWorker ? "the customer" : "the assigned worker"}.
-                </p>
-              </div>
-
-              <div className="max-h-96 space-y-4 overflow-y-auto p-6">
-                {(!ticket.replies || ticket.replies.length === 0) && (
-                  <p className="text-center text-sm text-gray-500">
-                    No replies yet.
-                  </p>
-                )}
-
-                {ticket.replies?.map((reply) => {
-                  const isMine = reply.sender?._id === user.id || reply.sender?._id === user._id;
-
-                  return (
-                    <div
-                      key={reply._id}
-                      className={`flex ${isMine ? "justify-end" : "justify-start"}`}
-                    >
-                      <div
-                        className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
-                          isMine
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        <p
-                          className={`mb-1 text-xs font-semibold ${
-                            isMine ? "text-blue-100" : "text-gray-500"
-                          }`}
-                        >
-                          {reply.sender?.name || "User"}
-                        </p>
-                        <p className="leading-6">{reply.message}</p>
-                        <p
-                          className={`mt-1 text-[10px] ${
-                            isMine ? "text-blue-100" : "text-gray-400"
-                          }`}
-                        >
-                          {new Date(reply.createdAt).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Reply form */}
-              <form
-                onSubmit={handleReply}
-                className="flex items-end gap-3 border-t border-gray-100 p-4"
-              >
-                <textarea
-                  value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Write a reply..."
-                  rows={2}
-                  className="flex-1 resize-none rounded-xl border border-gray-300 px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
-
-                <button
-                  type="submit"
-                  disabled={replySending || !replyText.trim()}
-                  className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {replySending ? "Sending..." : "Send"}
-                </button>
-              </form>
-
-              {replyError && (
-                <p className="px-4 pb-4 text-sm font-medium text-red-600">
-                  {replyError}
-                </p>
+              {ticket.aiSummary && (
+                <div className="mt-4 rounded-xl bg-gray-50 p-4">
+                  <p className="text-xs font-semibold text-gray-500">Summary</p>
+                  <p className="mt-1 text-sm text-gray-700">{ticket.aiSummary}</p>
+                </div>
               )}
             </div>
+
+            {/* Star review — customer only, once resolved */}
+            {isCustomer && isResolved && (
+              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 className="text-lg font-bold text-gray-900">
+                  {ticket.rating ? "Your Review" : "Rate this resolution"}
+                </h2>
+
+                {ticket.rating ? (
+                  <div className="mt-3">
+                    <StarPicker value={ticket.rating} onChange={() => {}} />
+                    {ticket.reviewComment && (
+                      <p className="mt-3 text-sm text-gray-600">{ticket.reviewComment}</p>
+                    )}
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmitReview} className="mt-4 space-y-4">
+                    <StarPicker value={ratingValue} onChange={setRatingValue} />
+
+                    <textarea
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      placeholder="Optional feedback about how this was handled..."
+                      rows={3}
+                      className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+
+                    {reviewError && (
+                      <p className="text-sm font-medium text-red-600">{reviewError}</p>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={submittingReview}
+                      className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {submittingReview ? "Submitting..." : "Submit Review"}
+                    </button>
+                  </form>
+                )}
+              </div>
+            )}
+
+            {/* Worker sees the customer's review too, read-only */}
+            {isWorker && isResolved && ticket.rating && (
+              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 className="text-lg font-bold text-gray-900">Customer Review</h2>
+                <div className="mt-3">
+                  <StarPicker value={ticket.rating} onChange={() => {}} />
+                  {ticket.reviewComment && (
+                    <p className="mt-3 text-sm text-gray-600">{ticket.reviewComment}</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sidebar — worker actions */}
@@ -347,8 +299,7 @@ const TicketDetail = () => {
                     Review before accepting
                   </h2>
                   <p className="mt-1 text-xs text-gray-500">
-                    These are AI-suggested — edit anything before you
-                    accept.
+                    These are AI-suggested — edit anything before you accept.
                   </p>
 
                   <div className="mt-4 space-y-4">
@@ -361,13 +312,11 @@ const TicketDetail = () => {
                         onChange={(e) => setReviewCategory(e.target.value)}
                         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                       >
-                        {["Billing", "Account", "Technical", "Orders", "General"].map(
-                          (c) => (
-                            <option key={c} value={c}>
-                              {c}
-                            </option>
-                          )
-                        )}
+                        {["Billing", "Account", "Technical", "Orders", "General"].map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
