@@ -77,9 +77,9 @@ const WorkerDashboard = () => {
       <section className="border-b border-gray-200 bg-white">
         <div className="mx-auto max-w-7xl px-6 py-8">
           <p className="text-sm font-medium text-blue-600">Worker Dashboard</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight text-gray-900">
-            Manage Your Requests
-          </h1>
+<h1 className="mt-1 text-3xl font-bold tracking-tight text-gray-900">
+  Welcome, {JSON.parse(localStorage.getItem("user") || "{}").name || "Worker"}
+</h1>
           <p className="mt-2 text-gray-600">
             Review assigned requests and update their progress.
           </p>
