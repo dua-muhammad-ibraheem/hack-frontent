@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
-
+import { Link } from "react-router-dom";
 const WorkerDashboard = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -336,17 +336,12 @@ const WorkerDashboard = () => {
                               : "Reject"}
                           </button>
 
-                          <button
-                            onClick={() =>
-                              handleAccept(ticket._id)
-                            }
-                            disabled={actionLoading === ticket._id}
-                            className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {actionLoading === ticket._id
-                              ? "..."
-                              : "Accept"}
-                          </button>
+                        <Link
+  to={`/tickets/${ticket._id}`}
+  className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+>
+  Review & Accept
+</Link>
                         </>
                       )}
 

@@ -142,12 +142,12 @@ const CreateTicket = () => {
     setLoading(true);
 
     try {
-      await api.post("/tickets", {
-        subject: formData.subject.trim(),
-        description: formData.description.trim(),
-        category: formData.category,
-        assignedAgent: selectedWorker,
-      });
+     await api.post("/tickets", {
+  subject: formData.subject.trim(),
+  description: formData.description.trim(),
+  category: formData.category,
+  assignedWorker: selectedWorker,
+});
 
       setSuccess(true);
 
