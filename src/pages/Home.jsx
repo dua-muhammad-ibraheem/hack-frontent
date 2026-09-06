@@ -196,16 +196,25 @@ const Home = () => {
                 One place for the complete support journey.
               </h2>
 
-              <p className="mt-5 leading-7 text-gray-600">
-                SupportDesk helps customers and support workers manage
-                customer issues from the first ticket to final resolution.
-              </p>
+            <p className="mt-5 leading-7 text-gray-600">
+  SupportDesk helps customers and support workers manage
+  customer issues from the first ticket to final resolution,
+  keeping every conversation and update in one organized place.
+</p>
 
-              <p className="mt-4 leading-7 text-gray-600">
-                Tickets are automatically matched with a category and
-                routed to the right worker, who reviews the details and
-                confirms them before starting work.
-              </p>
+<p className="mt-4 leading-7 text-gray-600">
+  When a ticket is created, it's automatically matched with the
+  right category and sent to an available worker based on that
+  category. The worker reviews the details, confirms the
+  category and priority, and only then starts working on it —
+  so nothing is assumed and nothing gets missed.
+</p>
+
+<p className="mt-4 leading-7 text-gray-600">
+  Once the issue is resolved, the customer can rate how it was
+  handled, giving a clear, honest record of support quality over
+  time.
+</p>
             </motion.div>
 
             <motion.div
