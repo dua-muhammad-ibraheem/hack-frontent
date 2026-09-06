@@ -259,59 +259,72 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ================= HOW IT WORKS ================= */}
-      <section id="how-it-works" className="bg-white px-6 py-20">
-        <div className="mx-auto max-w-7xl">
+     {/* ================= HOW IT WORKS ================= */}
+<section id="how-it-works" className="bg-white px-6 py-20">
+  <div className="mx-auto max-w-7xl">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="mx-auto max-w-2xl text-center"
+    >
+      <p className="text-sm font-semibold text-blue-600">How It Works</p>
+
+      <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 md:text-4xl">
+        From issue to resolution
+      </h2>
+
+      <p className="mt-4 leading-7 text-gray-600">
+        A simple workflow keeps every customer issue organized.
+      </p>
+    </motion.div>
+
+    <motion.div
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, amount: 0.2 }}
+      variants={staggerContainer}
+      className="relative mt-16"
+    >
+      {/* Connector line (desktop only) */}
+      <div className="absolute left-0 right-0 top-7 hidden h-0.5 bg-gray-200 md:block" />
+
+      <div className="grid gap-10 md:grid-cols-4 md:gap-6">
+        {[
+          { num: "01", icon: "📝", title: "Submit Ticket", desc: "Customer describes the issue and submits a support ticket." },
+          { num: "02", icon: "🎯", title: "Smart Match", desc: "The ticket is matched with a category and an available worker." },
+          { num: "03", icon: "✅", title: "Worker Reviews", desc: "The worker reviews the ticket details and accepts the request." },
+          { num: "04", icon: "⭐", title: "Resolve", desc: "The worker completes the ticket and the customer rates the resolution." },
+        ].map((step) => (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="mx-auto max-w-2xl text-center"
+            key={step.num}
+            variants={fadeUp}
+            whileHover={{ y: -6 }}
+            transition={{ duration: 0.3 }}
+            className="relative flex flex-col items-center text-center md:items-start md:text-left"
           >
-            <p className="text-sm font-semibold text-blue-600">How It Works</p>
+            <div className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-blue-600 text-xl shadow-md">
+              {step.icon}
+            </div>
 
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 md:text-4xl">
-              From issue to resolution
-            </h2>
+            <span className="mt-4 text-xs font-bold uppercase tracking-wide text-blue-600">
+              Step {step.num}
+            </span>
 
-            <p className="mt-4 leading-7 text-gray-600">
-              A simple workflow keeps every customer issue organized.
+            <h3 className="mt-1 text-lg font-semibold text-gray-900">
+              {step.title}
+            </h3>
+
+            <p className="mt-2 text-sm leading-6 text-gray-600">
+              {step.desc}
             </p>
           </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.2 }}
-            variants={staggerContainer}
-            className="mt-12 grid gap-6 md:grid-cols-4"
-          >
-            {[
-              { num: "01", title: "Submit Ticket", desc: "Customer describes the issue and submits a support ticket." },
-              { num: "02", title: "Smart Match", desc: "The ticket is matched with a category and an available worker." },
-              { num: "03", title: "Worker Reviews", desc: "The worker reviews the ticket details and accepts the request." },
-              { num: "04", title: "Resolve", desc: "The worker completes the ticket and the customer rates the resolution." },
-            ].map((step) => (
-              <motion.div
-                key={step.num}
-                variants={fadeUp}
-                whileHover={{ y: -6 }}
-                transition={{ duration: 0.3 }}
-                className="rounded-2xl border border-gray-200 p-6"
-              >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 font-bold text-blue-600">
-                  {step.num}
-                </div>
-
-                <h3 className="mt-5 font-semibold text-gray-900">{step.title}</h3>
-
-                <p className="mt-2 text-sm leading-6 text-gray-600">{step.desc}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
+        ))}
+      </div>
+    </motion.div>
+  </div>
+</section>
 
       {/* ================= CTA ================= */}
       <section className="bg-gray-50 px-6 py-20">
