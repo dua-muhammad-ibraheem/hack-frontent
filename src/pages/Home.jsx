@@ -28,7 +28,7 @@ const Home = () => {
               variants={fadeUp}
               className="mb-6 inline-flex rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-600"
             >
-              AI-Powered Customer Support
+              Simple Customer Support Platform
             </motion.div>
 
             <motion.h1
@@ -43,9 +43,8 @@ const Home = () => {
               variants={fadeUp}
               className="mt-6 max-w-xl text-lg leading-8 text-gray-600"
             >
-              Submit support tickets, get AI-assisted triage, communicate
-              with support agents, and track your issue from start to
-              resolution.
+              Submit support tickets, get them quickly routed to the right
+              worker, and track your issue from start to resolution.
             </motion.p>
 
             <motion.div variants={fadeUp} className="mt-8 flex flex-wrap gap-4">
@@ -70,8 +69,8 @@ const Home = () => {
 
             <motion.div variants={fadeUp} className="mt-10 flex flex-wrap gap-8">
               <div>
-                <p className="text-xl font-bold text-gray-900">AI</p>
-                <p className="mt-1 text-sm text-gray-500">Smart ticket triage</p>
+                <p className="text-xl font-bold text-gray-900">Fast</p>
+                <p className="mt-1 text-sm text-gray-500">Smart ticket routing</p>
               </div>
 
               <div>
@@ -81,7 +80,7 @@ const Home = () => {
 
               <div>
                 <p className="text-xl font-bold text-gray-900">Live</p>
-                <p className="mt-1 text-sm text-gray-500">Agent communication</p>
+                <p className="mt-1 text-sm text-gray-500">Worker updates</p>
               </div>
             </motion.div>
           </motion.div>
@@ -198,14 +197,14 @@ const Home = () => {
               </h2>
 
               <p className="mt-5 leading-7 text-gray-600">
-                SupportDesk helps customers and support agents manage
+                SupportDesk helps customers and support workers manage
                 customer issues from the first ticket to final resolution.
               </p>
 
               <p className="mt-4 leading-7 text-gray-600">
-                AI assists agents by suggesting the category, priority,
-                and summary of each ticket, while the final decision
-                always remains with the human agent.
+                Tickets are automatically matched with a category and
+                routed to the right worker, who reviews the details and
+                confirms them before starting work.
               </p>
             </motion.div>
 
@@ -228,10 +227,10 @@ const Home = () => {
 
                 <div>
                   <p className="text-sm font-semibold text-gray-900">
-                    AI Assistant
+                    Smart Routing
                   </p>
                   <p className="mt-1 text-sm text-gray-500">
-                    Suggests category, priority and summary.
+                    Matches each ticket with a category and worker.
                   </p>
                 </div>
 
@@ -239,10 +238,10 @@ const Home = () => {
 
                 <div>
                   <p className="text-sm font-semibold text-gray-900">
-                    Support Agent
+                    Support Worker
                   </p>
                   <p className="mt-1 text-sm text-gray-500">
-                    Reviews, responds and resolves the issue.
+                    Reviews, confirms and resolves the issue.
                   </p>
                 </div>
               </div>
@@ -281,9 +280,9 @@ const Home = () => {
           >
             {[
               { num: "01", title: "Submit Ticket", desc: "Customer describes the issue and submits a support ticket." },
-              { num: "02", title: "AI Triage", desc: "AI suggests the category, priority and issue summary." },
-              { num: "03", title: "Agent Handles", desc: "Agent reviews the AI result, replies and updates the ticket." },
-              { num: "04", title: "Resolve", desc: "Agent adds a resolution note and resolves the ticket." },
+              { num: "02", title: "Smart Match", desc: "The ticket is matched with a category and an available worker." },
+              { num: "03", title: "Worker Reviews", desc: "The worker reviews the ticket details and accepts the request." },
+              { num: "04", title: "Resolve", desc: "The worker completes the ticket and the customer rates the resolution." },
             ].map((step) => (
               <motion.div
                 key={step.num}
